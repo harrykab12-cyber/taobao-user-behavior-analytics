@@ -1,0 +1,26 @@
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+import pandas as pd
+
+from taobao_analytics.cleaning import clean_user_behavior
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input_csv", type=Path)
+    parser.add_argument("output_csv", type=Path)
+    args = parser.parse_args()
+    if not args.input_csv.exists():
+        raise FileNotFoundError(f"Raw data not found: {args.input_csv}. See data/README.md.")
+    cleaned, report = clean_user_behavior(pd.read_csv(args.input_csv))
+    args.output_csv.parent.mkdir(parents=True, exist_ok=True)
+    cleaned.to_csv(args.output_csv, index=False)
+    print(json.dumps(report, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()
