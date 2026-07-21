@@ -40,6 +40,16 @@ def test_cleaning_rejects_unknown_behavior_types() -> None:
         clean_user_behavior(raw)
 
 
+def test_cleaning_rejects_numeric_unknown_behavior_types_with_value_error() -> None:
+    raw = pd.DataFrame(
+        [[1, 10, 100, 9, 1511568000]],
+        columns=["user_id", "item_id", "category_id", "behavior_type", "timestamp"],
+    )
+
+    with pytest.raises(ValueError, match="Unknown behavior types: 9"):
+        clean_user_behavior(raw)
+
+
 def test_cleaning_reports_rows_removed_for_missing_keys_and_bad_timestamps() -> None:
     raw = pd.DataFrame(
         [

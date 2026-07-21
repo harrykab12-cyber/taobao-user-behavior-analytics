@@ -11,7 +11,10 @@ def clean_user_behavior(frame: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, in
     if missing_columns:
         raise ValueError(f"Missing required columns: {', '.join(missing_columns)}")
 
-    unknown = sorted(set(frame["behavior_type"].dropna()) - VALID_BEHAVIORS)
+    unknown = sorted(
+        str(value)
+        for value in set(frame["behavior_type"].dropna()) - VALID_BEHAVIORS
+    )
     if unknown:
         raise ValueError(f"Unknown behavior types: {', '.join(unknown)}")
 
