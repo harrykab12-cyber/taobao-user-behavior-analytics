@@ -11,3 +11,46 @@ models:
         tests:
           - dbt_utils.expression_is_true:
               expression: "between 0 and 1"
+
+  - name: fct_user_funnel
+    columns:
+      - name: pv_users
+        tests: [not_null]
+      - name: favorite_users
+        tests: [not_null]
+      - name: cart_users
+        tests: [not_null]
+      - name: purchase_users
+        tests: [not_null]
+
+  - name: fct_retention
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - cohort_date
+            - day_number
+    columns:
+      - name: cohort_date
+        tests: [not_null]
+      - name: day_number
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      - name: retained_users
+        tests: [not_null]
+      - name: retention_rate
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 1"
+
+  - name: fct_user_segment
+    columns:
+      - name: user_id
+        tests: [not_null, unique]
+      - name: user_segment
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['复购型', '购买型', '加购未购型', '意向型', '浏览型']
