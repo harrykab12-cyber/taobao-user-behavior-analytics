@@ -4,6 +4,8 @@ import pandas as pd
 
 REQUIRED_COLUMNS = ["user_id", "item_id", "category_id", "behavior_type", "timestamp"]
 VALID_BEHAVIORS = {"pv", "fav", "cart", "buy"}
+ANALYSIS_START_AT = pd.Timestamp("2017-11-25 00:00:00", tz="Asia/Shanghai")
+ANALYSIS_END_AT = pd.Timestamp("2017-12-03 23:59:59", tz="Asia/Shanghai")
 
 
 def clean_user_behavior(frame: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, int]]:
@@ -27,6 +29,10 @@ def clean_user_behavior(frame: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, in
     invalid_timestamp_rows_removed = int(event_at.isna().sum())
     result = result.loc[event_at.notna()].copy()
     event_at = event_at.loc[event_at.notna()]
+    in_analysis_window = (event_at >= ANALYSIS_START_AT) & (event_at <= ANALYSIS_END_AT)
+    out_of_analysis_window_rows_removed = int((~in_analysis_window).sum())
+    result = result.loc[in_analysis_window].copy()
+    event_at = event_at.loc[in_analysis_window]
     before_deduplicate = len(result)
     result = result.drop_duplicates()
     duplicate_rows_removed = before_deduplicate - len(result)
@@ -40,6 +46,7 @@ def clean_user_behavior(frame: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, in
         "input_rows": input_rows,
         "null_key_rows_removed": null_key_rows_removed,
         "invalid_timestamp_rows_removed": invalid_timestamp_rows_removed,
+        "out_of_analysis_window_rows_removed": out_of_analysis_window_rows_removed,
         "duplicate_rows_removed": duplicate_rows_removed,
         "output_rows": len(result),
     }

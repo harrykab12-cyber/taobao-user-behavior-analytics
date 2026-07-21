@@ -27,6 +27,7 @@ def test_prepare_cleaned_csv_is_chunked_and_deduplicates_across_chunks(
         "input_rows": 4,
         "null_key_rows_removed": 0,
         "invalid_timestamp_rows_removed": 1,
+        "out_of_analysis_window_rows_removed": 0,
         "duplicate_rows_removed": 1,
         "output_rows": 2,
     }

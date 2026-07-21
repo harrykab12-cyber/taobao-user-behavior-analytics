@@ -42,6 +42,7 @@ def prepare_cleaned_csv(
         "input_rows": 0,
         "null_key_rows_removed": 0,
         "invalid_timestamp_rows_removed": 0,
+        "out_of_analysis_window_rows_removed": 0,
         "duplicate_rows_removed": 0,
         "output_rows": 0,
     }
@@ -80,6 +81,7 @@ def prepare_cleaned_csv(
                     "input_rows",
                     "null_key_rows_removed",
                     "invalid_timestamp_rows_removed",
+                    "out_of_analysis_window_rows_removed",
                     "duplicate_rows_removed",
                 ):
                     totals[key] += report[key]
