@@ -70,10 +70,35 @@ def test_superset_bundle_builder_injects_database_uri_and_creates_zip(
 
 def test_compose_pins_superset_and_defines_init_and_healthcheck() -> None:
     compose = Path("docker-compose.yml").read_text(encoding="utf-8")
+    dockerfile = Path("superset/Dockerfile").read_text(encoding="utf-8")
 
-    assert "apache/superset:4.1.2" in compose
+    assert "apache/superset:4.1.2" in dockerfile
     assert "superset-init:" in compose
     assert "superset db upgrade" in Path("superset/bootstrap.sh").read_text(
         encoding="utf-8"
     )
     assert "healthcheck:" in compose
+
+
+def test_superset_services_build_pinned_image_with_postgres_driver_smoke_check() -> None:
+    compose = Path("docker-compose.yml").read_text(encoding="utf-8")
+    dockerfile = Path("superset/Dockerfile").read_text(encoding="utf-8")
+
+    assert "FROM apache/superset:4.1.2" in dockerfile
+    assert "psycopg2-binary==2.9.10" in dockerfile
+    assert "import psycopg2" in dockerfile
+    assert compose.count("build: *superset-build") == 2
+    assert "dockerfile: superset/Dockerfile" in compose
+
+
+def test_ordered_funnel_sorts_by_its_monotonic_user_count_metric() -> None:
+    chart = Path("superset/native_export/charts/Ordered_funnel.yaml").read_text(
+        encoding="utf-8"
+    )
+    params_line = next(
+        line for line in chart.splitlines() if line.startswith("params: ")
+    )
+    params = json.loads(params_line.removeprefix("params: '").removesuffix("'"))
+
+    assert params["metric"] == "sum__user_count"
+    assert params["sort_by_metric"] is True

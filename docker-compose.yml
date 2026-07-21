@@ -1,4 +1,7 @@
-x-superset-image: &superset-image apache/superset:4.1.2
+x-superset-build: &superset-build
+  context: .
+  dockerfile: superset/Dockerfile
+x-superset-image: &superset-image taobao-superset:4.1.2-postgres
 x-superset-environment: &superset-environment
   SUPERSET_CONFIG_PATH: /app/superset-assets/superset_config.py
   SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:-local_dev_only_change_before_shared_use_4f5d2f0a}
@@ -24,6 +27,7 @@ services:
       retries: 10
 
   superset-init:
+    build: *superset-build
     image: *superset-image
     environment: *superset-environment
     depends_on:
@@ -35,6 +39,7 @@ services:
     restart: "no"
 
   superset:
+    build: *superset-build
     image: *superset-image
     environment: *superset-environment
     depends_on:

@@ -1,6 +1,6 @@
 # Superset 4.1.2 看板资产
 
-项目通过 `docker-compose.yml` 固定使用 `apache/superset:4.1.2`。`superset-init` 服务执行元数据库升级、幂等创建本地管理员并运行 `superset init`；`superset` 服务在端口 `8088` 提供界面和健康检查。
+项目通过 `superset/Dockerfile` 固定继承 `apache/superset:4.1.2`，并固定安装 PostgreSQL 驱动 `psycopg2-binary==2.9.10`；镜像构建时会执行驱动导入检查。Compose 中的 `superset-init` 和 `superset` 共用这一派生镜像。`superset-init` 服务执行元数据库升级、幂等创建本地管理员并运行 `superset init`；`superset` 服务在端口 `8088` 提供界面和健康检查。
 
 ## 数据集和三页结构
 
