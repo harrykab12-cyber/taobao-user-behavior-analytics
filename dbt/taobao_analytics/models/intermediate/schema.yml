@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: int_user_daily_behavior
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - user_id
+            - event_date
+    columns:
+      - name: user_id
+        tests: [not_null]
+      - name: event_date
+        tests: [not_null]
+      - name: has_pv
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+              quote: false
+      - name: has_favorite
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+              quote: false
+      - name: has_cart
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+              quote: false
+      - name: has_purchase
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+              quote: false

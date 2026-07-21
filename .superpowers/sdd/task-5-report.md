@@ -114,3 +114,108 @@ Neither dbt nor a PostgreSQL execution path is available in this environment. Co
 
 - SQL behavior is validated statically rather than through PostgreSQL execution because the required runtime is unavailable.
 - The repository's existing `dbt_utils` dependency is required by the schema tests.
+
+## Review-finding fixes
+
+The Task 5 review findings were addressed with focused dbt tests only. Static comparison against Git confirmed that `int_user_daily_behavior.sql`, `fct_retention.sql`, and `fct_user_segment.sql` remain unchanged because their current SQL already implements the reviewed semantics.
+
+Created:
+
+- `dbt/taobao_analytics/models/intermediate/schema.yml`
+- `dbt/taobao_analytics/tests/retention_matches_source_semantics.sql`
+- `dbt/taobao_analytics/tests/user_segments_match_source_semantics.sql`
+
+No Task 6 asset or file was modified.
+
+### Daily behavior test coverage
+
+The intermediate schema now asserts:
+
+- unique `(user_id, event_date)` rows with `dbt_utils.unique_combination_of_columns`;
+- non-null `user_id` and `event_date` keys;
+- non-null values for all four behavior flags;
+- numeric accepted values `{0, 1}` for `has_pv`, `has_favorite`, `has_cart`, and `has_purchase`.
+
+The accepted-value tests set `quote: false`, so dbt emits numeric rather than string literals for the integer flag columns.
+
+### Retention semantic comparison
+
+`retention_matches_source_semantics.sql` independently derives from `stg_user_behavior`:
+
+1. each user's cohort date as `min(event_date)`;
+2. distinct user-day activity;
+3. cohort size from the complete first-event user set;
+4. retained users per cohort-relative day;
+5. retention rate using retained users divided by the full cohort size.
+
+It full-outer-joins the expected result to `fct_retention` at `(cohort_date, day_number)` grain. Missing rows, extra rows, retained-count differences, and retention-rate differences are all returned as failures. A correct mart therefore produces zero rows.
+
+### User-segment semantic comparison
+
+`user_segments_match_source_semantics.sql` derives the complete distinct user set from `stg_user_behavior`, recomputes the full segment CASE precedence, and defines repeat purchasers as users with purchases on at least two distinct `event_date` values. It full-outer-joins that expected relation to `fct_user_segment`, returning missing users, extra users, or classification differences as failures. A correct mart therefore produces zero rows.
+
+## Review-fix validation evidence
+
+### RED evidence
+
+Before the fix, all three required focused-test files were absent:
+
+```text
+dbt/taobao_analytics/models/intermediate/schema.yml: exit 1
+dbt/taobao_analytics/tests/retention_matches_source_semantics.sql: exit 1
+dbt/taobao_analytics/tests/user_segments_match_source_semantics.sql: exit 1
+```
+
+The dbt and PostgreSQL executables were also confirmed absent, so a database-backed RED run was not possible.
+
+### Static validation
+
+A structured Ruby audit parsed the intermediate YAML and checked 31 focused assertions covering:
+
+- exact composite uniqueness columns;
+- required non-null and numeric binary-domain tests;
+- resolution of every `ref()` to an existing dbt model interface;
+- cohort-date, distinct-activity, cohort-size, retained-count, and rate recomputation;
+- full retention result-set and measure comparison;
+- complete source-user comparison;
+- repeat-purchaser use of distinct purchase dates;
+- exact segment CASE precedence and mismatch detection.
+
+Result:
+
+```text
+static dbt test audit: 31 assertions passed
+model SQL unchanged: verified
+```
+
+YAML parsing and whitespace validation also completed successfully:
+
+```text
+intermediate schema YAML parsed
+all focused test files are non-empty
+git diff --check: exit 0
+```
+
+### Python regression suite
+
+```text
+$ pytest -q
+........                                                                 [100%]
+8 passed in 0.78s
+```
+
+### Database-backed test limitation
+
+The focused command was attempted from `dbt/taobao_analytics`:
+
+```text
+$ dbt test --select int_user_daily_behavior retention_matches_source_semantics user_segments_match_source_semantics
+zsh: command not found: dbt
+focused dbt test exit: 127
+
+$ psql --version
+zsh: command not found: psql
+PostgreSQL client exit: 127
+```
+
+Accordingly, this fix does not claim a database-backed dbt test pass. The focused tests must still be executed against the configured PostgreSQL profile in an environment containing dbt, PostgreSQL connectivity, and the existing `dbt_utils` dependency.
