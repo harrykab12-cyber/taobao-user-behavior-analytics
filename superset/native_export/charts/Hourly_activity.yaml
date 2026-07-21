@@ -1,0 +1,6 @@
+slice_name: 小时活跃分布
+viz_type: echarts_timeseries_bar
+params: '{"datasource":"0__table","viz_type":"echarts_timeseries_bar","x_axis":"hour_of_day","metrics":["sum__hourly_uv"],"adhoc_filters":[],"row_limit":1000,"sort_series_type":"sum","orientation":"vertical"}'
+uuid: 11111111-1111-4111-8111-111111111310
+dataset_uuid: 11111111-1111-4111-8111-111111111205
+version: 1.0.0

@@ -1,0 +1,36 @@
+version: 2
+
+unit_tests:
+  - name: retention_materializes_zero_days_without_exceeding_source_max_date
+    model: fct_retention
+    given:
+      - input: ref('stg_user_behavior')
+        rows:
+          - {user_id: 1, event_date: '2017-11-25'}
+          - {user_id: 1, event_date: '2017-11-27'}
+          - {user_id: 2, event_date: '2017-11-25'}
+    expect:
+      rows:
+        - {cohort_date: '2017-11-25', day_number: 0, cohort_users: 2, retained_users: 2, retention_rate: 1.0}
+        - {cohort_date: '2017-11-25', day_number: 1, cohort_users: 2, retained_users: 0, retention_rate: 0.0}
+        - {cohort_date: '2017-11-25', day_number: 2, cohort_users: 2, retained_users: 1, retention_rate: 0.5}
+
+  - name: funnel_requires_pv_then_favorite_or_cart_then_purchase
+    model: int_user_funnel_path
+    given:
+      - input: ref('stg_user_behavior')
+        rows:
+          - {user_id: 1, behavior_type: 'pv', event_at: '2017-11-25 08:00:00'}
+          - {user_id: 1, behavior_type: 'cart', event_at: '2017-11-25 08:01:00'}
+          - {user_id: 1, behavior_type: 'buy', event_at: '2017-11-25 08:02:00'}
+          - {user_id: 2, behavior_type: 'fav', event_at: '2017-11-25 08:00:00'}
+          - {user_id: 2, behavior_type: 'pv', event_at: '2017-11-25 08:01:00'}
+          - {user_id: 2, behavior_type: 'buy', event_at: '2017-11-25 08:02:00'}
+          - {user_id: 3, behavior_type: 'pv', event_at: '2017-11-25 08:00:00'}
+          - {user_id: 3, behavior_type: 'buy', event_at: '2017-11-25 08:01:00'}
+          - {user_id: 3, behavior_type: 'fav', event_at: '2017-11-25 08:02:00'}
+    expect:
+      rows:
+        - {user_id: 1, first_pv_at: '2017-11-25 08:00:00', first_intent_at: '2017-11-25 08:01:00', first_intent_type: 'cart', first_purchase_at: '2017-11-25 08:02:00'}
+        - {user_id: 2, first_pv_at: '2017-11-25 08:01:00', first_intent_at: null, first_intent_type: null, first_purchase_at: null}
+        - {user_id: 3, first_pv_at: '2017-11-25 08:00:00', first_intent_at: '2017-11-25 08:02:00', first_intent_type: 'fav', first_purchase_at: null}

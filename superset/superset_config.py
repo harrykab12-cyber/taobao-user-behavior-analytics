@@ -1,0 +1,10 @@
+from __future__ import annotations
+
+import os
+
+SECRET_KEY = os.environ["SUPERSET_SECRET_KEY"]
+SQLALCHEMY_DATABASE_URI = os.environ["SUPERSET_METADATA_DATABASE_URI"]
+WTF_CSRF_ENABLED = True
+FEATURE_FLAGS = {
+    "DASHBOARD_NATIVE_FILTERS": True,
+}

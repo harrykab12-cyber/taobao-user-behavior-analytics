@@ -9,5 +9,6 @@ dbt/taobao_analytics/target/
 dbt/taobao_analytics/logs/
 superset/assets/*.png
 !superset/assets/.gitkeep
+superset/dist/
 work/
 .superpowers/

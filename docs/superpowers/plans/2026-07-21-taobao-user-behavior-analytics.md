@@ -14,7 +14,10 @@
 - Never commit original or derived row-level Tianchi data; only use the deterministic synthetic sample at `data/sample/user_behavior_sample.csv` in Git.
 - Use `behavior_type` values `pv`, `fav`, `cart`, and `buy`; reject every other value during Python validation.
 - Treat all source timestamps as Unix seconds in `Asia/Shanghai` and output timezone-naive local timestamps for PostgreSQL.
-- Use `order_date` for daily metrics, and define a purchase user as a user with at least one `buy` event in the relevant period.
+- Use `event_date` for daily metrics, and define a purchase user as a user with at least one `buy` event in the relevant period.
+- Read and write full-data CSVs in bounded chunks; use disk-backed cross-chunk deduplication and bounded database inserts.
+- Define the funnel as the ordered path `pv → (fav or cart) → buy`, retaining the first qualifying timestamp for each stage.
+- Densify retention only through the source maximum `event_date`, with observable no-activity cells represented as zero.
 - Define repeat purchasers as users with purchases on at least two distinct dates in the analysis period.
 - Define retention as the proportion of cohort users with at least one event on each relative day; cohorts use the first observed event date.
 - Every implementation task must begin with a failing automated test and end with a focused Git commit.
@@ -39,13 +42,13 @@
 │   ├── profiles.yml.example
 │   ├── models/
 │   │   ├── staging/stg_user_behavior.sql
-│   │   ├── intermediate/int_user_daily_behavior.sql
-│   │   └── marts/{fct_daily_metrics,fct_retention,fct_user_funnel,fct_user_segment}.sql
+│   │   ├── intermediate/{int_user_daily_behavior,int_user_funnel_path}.sql
+│   │   └── marts/{fct_daily_metrics,fct_hourly_metrics,fct_category_metrics,fct_retention,fct_user_funnel,fct_user_segment,fct_user_segment_activity}.sql
 │   └── tests/
 ├── reports/taobao_user_behavior_analysis.md
-├── scripts/{prepare_data.py,load_to_postgres.py}
-├── src/taobao_analytics/{__init__.py,cleaning.py,loading.py,metrics.py}
-├── superset/{README.md,dashboard-spec.md,assets/.gitkeep}
+├── scripts/{prepare_data.py,load_to_postgres.py,build_superset_bundle.py}
+├── src/taobao_analytics/{__init__.py,cleaning.py,preparation.py,loading.py,metrics.py,superset_bundle.py}
+├── superset/{README.md,dashboard-spec.md,dashboard_manifest.json,native_export/,assets/.gitkeep}
 └── tests/{conftest.py,test_cleaning.py,test_loading.py,test_metrics.py}
 ```
 
@@ -102,7 +105,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<9"]
+dev = ["dbt-postgres==1.9.0", "pytest>=8,<9"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
@@ -305,9 +308,7 @@ import argparse
 import json
 from pathlib import Path
 
-import pandas as pd
-
-from taobao_analytics.cleaning import clean_user_behavior
+from taobao_analytics.preparation import prepare_cleaned_csv
 
 
 def main() -> None:
@@ -317,9 +318,7 @@ def main() -> None:
     args = parser.parse_args()
     if not args.input_csv.exists():
         raise FileNotFoundError(f"Raw data not found: {args.input_csv}. See data/README.md.")
-    cleaned, report = clean_user_behavior(pd.read_csv(args.input_csv))
-    args.output_csv.parent.mkdir(parents=True, exist_ok=True)
-    cleaned.to_csv(args.output_csv, index=False)
+    report = prepare_cleaned_csv(args.input_csv, args.output_csv)
     print(json.dumps(report, ensure_ascii=False))
 
 
@@ -390,7 +389,14 @@ from sqlalchemy.engine import Engine
 
 
 def load_cleaned_events(frame: pd.DataFrame, engine: Engine, table_name: str = "raw_user_behavior") -> int:
-    frame.to_sql(table_name, engine, if_exists="replace", index=False, method="multi")
+    frame.to_sql(
+        table_name,
+        engine,
+        if_exists="replace",
+        index=False,
+        method=None,
+        chunksize=10_000,
+    )
     return len(frame)
 ```
 
@@ -402,10 +408,9 @@ import argparse
 import os
 from pathlib import Path
 
-import pandas as pd
 from sqlalchemy import create_engine
 
-from taobao_analytics.loading import load_cleaned_events
+from taobao_analytics.loading import load_cleaned_csv
 
 
 def main() -> None:
@@ -415,7 +420,11 @@ def main() -> None:
     if not args.input_csv.exists():
         raise FileNotFoundError(f"Cleaned data not found: {args.input_csv}")
     database_url = os.environ.get("DATABASE_URL", "postgresql+psycopg://analytics:analytics_local_only@localhost:5432/taobao_analytics")
-    inserted = load_cleaned_events(pd.read_csv(args.input_csv), create_engine(database_url))
+    inserted = load_cleaned_csv(
+        args.input_csv,
+        create_engine(database_url),
+        schema=os.environ.get("RAW_SCHEMA", "public"),
+    )
     print(f"Loaded {inserted} rows into raw_user_behavior")
 
 
@@ -512,7 +521,7 @@ taobao_analytics:
       password: "{{ env_var('POSTGRES_PASSWORD', 'analytics_local_only') }}"
       port: "{{ env_var('POSTGRES_PORT', '5432') | int }}"
       dbname: "{{ env_var('POSTGRES_DB', 'taobao_analytics') }}"
-      schema: analytics
+      schema: "{{ env_var('DBT_SCHEMA', 'analytics') }}"
       threads: 4
 ```
 
@@ -521,7 +530,7 @@ taobao_analytics:
 version: 2
 sources:
   - name: raw
-    schema: public
+    schema: "{{ env_var('RAW_SCHEMA', 'public') }}"
     tables:
       - name: raw_user_behavior
         columns:
@@ -596,24 +605,34 @@ Expected: one focused dbt commit.
 
 **Files:**
 - Create: `dbt/taobao_analytics/models/intermediate/int_user_daily_behavior.sql`
+- Create: `dbt/taobao_analytics/models/intermediate/int_user_funnel_path.sql`
 - Create: `dbt/taobao_analytics/models/marts/fct_user_funnel.sql`
 - Create: `dbt/taobao_analytics/models/marts/fct_retention.sql`
 - Create: `dbt/taobao_analytics/models/marts/fct_user_segment.sql`
+- Create: `dbt/taobao_analytics/models/marts/fct_hourly_metrics.sql`
+- Create: `dbt/taobao_analytics/models/marts/fct_category_metrics.sql`
+- Create: `dbt/taobao_analytics/models/marts/fct_user_segment_activity.sql`
 - Modify: `dbt/taobao_analytics/models/marts/schema.yml`
 - Create: `dbt/taobao_analytics/tests/funnel_counts_are_monotonic.sql`
 
 **Interfaces:**
-- Produces: `int_user_daily_behavior`, `fct_user_funnel`, `fct_retention`, and `fct_user_segment`.
+- Produces: `int_user_daily_behavior`, `int_user_funnel_path`, `fct_user_funnel`, `fct_retention`, and `fct_user_segment`.
 - Consumes: `stg_user_behavior` from Task 4.
-- Contract: funnel stages are monotonic, retention has cohort dates and non-negative relative days, and every analyzed user has exactly one segment.
+- Contract: funnel stages follow timestamp order with `fav` or `cart` as the allowed middle stage; retention includes zero cells through the source maximum date; every analyzed user has exactly one segment.
 
 - [ ] **Step 1: Write the failing singular funnel test**
 
 ```sql
 -- dbt/taobao_analytics/tests/funnel_counts_are_monotonic.sql
-select *
-from {{ ref('fct_user_funnel') }}
-where not (pv_users >= favorite_users and favorite_users >= cart_users and cart_users >= purchase_users)
+with stages as (
+  select
+    max(user_count) filter (where stage_order = 1) as pv_users,
+    max(user_count) filter (where stage_order = 2) as intent_users,
+    max(user_count) filter (where stage_order = 3) as purchase_users
+  from {{ ref('fct_user_funnel') }}
+)
+select * from stages
+where not (pv_users >= intent_users and intent_users >= purchase_users)
 ```
 
 - [ ] **Step 2: Run the test to verify it fails because the model is absent**
@@ -638,48 +657,83 @@ group by 1, 2
 ```
 
 ```sql
--- dbt/taobao_analytics/models/marts/fct_user_funnel.sql
-with stages as (
-  select
-    user_id,
-    bool_or(behavior_type = 'pv') as has_pv,
-    bool_or(behavior_type = 'fav') as has_favorite,
-    bool_or(behavior_type = 'cart') as has_cart,
-    bool_or(behavior_type = 'buy') as has_purchase
+-- dbt/taobao_analytics/models/intermediate/int_user_funnel_path.sql
+with users as (
+  select distinct user_id from {{ ref('stg_user_behavior') }}
+), first_page_views as (
+  select user_id, min(event_at) as first_pv_at
   from {{ ref('stg_user_behavior') }}
+  where behavior_type = 'pv'
+  group by 1
+), first_intent_events as (
+  select distinct on (first_page_views.user_id)
+    first_page_views.user_id,
+    events.event_at as first_intent_at,
+    events.behavior_type as first_intent_type
+  from first_page_views
+  join {{ ref('stg_user_behavior') }} events
+    on first_page_views.user_id = events.user_id
+   and events.behavior_type in ('fav', 'cart')
+   and events.event_at > first_page_views.first_pv_at
+  order by first_page_views.user_id, events.event_at
+), first_purchases as (
+  select first_intent_events.user_id, min(events.event_at) as first_purchase_at
+  from first_intent_events
+  join {{ ref('stg_user_behavior') }} events
+    on first_intent_events.user_id = events.user_id
+   and events.behavior_type = 'buy'
+   and events.event_at > first_intent_events.first_intent_at
   group by 1
 )
-select
-  count(*) filter (where has_pv) as pv_users,
-  count(*) filter (where has_pv and has_favorite) as favorite_users,
-  count(*) filter (where has_pv and has_favorite and has_cart) as cart_users,
-  count(*) filter (where has_pv and has_favorite and has_cart and has_purchase) as purchase_users
-from stages
+select users.user_id, first_pv_at, first_intent_at, first_intent_type, first_purchase_at
+from users
+left join first_page_views using (user_id)
+left join first_intent_events using (user_id)
+left join first_purchases using (user_id)
+```
+
+```sql
+-- dbt/taobao_analytics/models/marts/fct_user_funnel.sql
+with counts as (
+  select
+    count(*) filter (where first_pv_at is not null) as pv_users,
+    count(*) filter (where first_intent_at is not null) as intent_users,
+    count(*) filter (where first_purchase_at is not null) as purchase_users
+  from {{ ref('int_user_funnel_path') }}
+)
+select 1 as stage_order, '浏览' as stage_name, pv_users as user_count from counts
+union all
+select 2, '意向（收藏或加购）', intent_users from counts
+union all
+select 3, '购买', purchase_users from counts
 ```
 
 ```sql
 -- dbt/taobao_analytics/models/marts/fct_retention.sql
-with first_events as (
+with observation_bounds as (
+  select max(event_date) as max_event_date from {{ ref('stg_user_behavior') }}
+), first_events as (
   select user_id, min(event_date) as cohort_date
-  from {{ ref('stg_user_behavior') }}
-  group by 1
-), activity as (
-  select distinct user_id, event_date
-  from {{ ref('stg_user_behavior') }}
+  from {{ ref('stg_user_behavior') }} group by 1
 ), cohort_sizes as (
-  select cohort_date, count(*) as cohort_users
-  from first_events
-  group by 1
+  select cohort_date, count(*) as cohort_users from first_events group by 1
+), spine as (
+  select cohort_date, cohort_users, generated_date::date as activity_date
+  from cohort_sizes cross join observation_bounds
+  cross join lateral generate_series(cohort_date, max_event_date, interval '1 day') generated_date
+), activity as (
+  select distinct user_id, event_date from {{ ref('stg_user_behavior') }}
+), retained_activity as (
+  select first_events.cohort_date, activity.event_date as activity_date,
+         count(distinct activity.user_id) as retained_users
+  from first_events join activity using (user_id)
+  group by 1, 2
 )
-select
-  first_events.cohort_date,
-  activity.event_date - first_events.cohort_date as day_number,
-  count(distinct activity.user_id) as retained_users,
-  count(distinct activity.user_id)::numeric / nullif(cohort_sizes.cohort_users, 0) as retention_rate
-from first_events
-join activity using (user_id)
-join cohort_sizes using (cohort_date)
-group by 1, 2, cohort_sizes.cohort_users
+select cohort_date, activity_date - cohort_date as day_number, cohort_users,
+       coalesce(retained_users, 0) as retained_users,
+       coalesce(retained_users, 0)::numeric / nullif(cohort_users, 0) as retention_rate
+from spine
+left join retained_activity using (cohort_date, activity_date)
 ```
 
 ```sql
@@ -723,7 +777,11 @@ Expected: one focused dbt analytics commit.
 **Files:**
 - Create: `superset/README.md`
 - Create: `superset/dashboard-spec.md`
-- Create: `superset/taobao_analytics_dashboard.yaml`
+- Create: `superset/dashboard_manifest.json`
+- Create: `superset/native_export/`
+- Create: `superset/bootstrap.sh`
+- Create: `superset/superset_config.py`
+- Create: `scripts/build_superset_bundle.py`
 - Create: `reports/taobao_user_behavior_analysis.md`
 - Create: `tests/test_metrics.py`
 - Create: `src/taobao_analytics/metrics.py`
@@ -775,8 +833,8 @@ Write `superset/dashboard-spec.md` with this exact dashboard structure:
 # 仪表盘规格
 
 ## 1. 经营与漏斗概览
-- 指标卡：PV、UV、购买用户数、购买转化率。
-- 图表：日 PV/UV 趋势、四阶段用户漏斗。
+- 指标卡：`pv` 行为事件数、UV、购买用户数、购买转化率。
+- 图表：日 PV/UV 趋势、`pv → (fav 或 cart) → buy` 有序三阶段用户漏斗。
 
 ## 2. 用户增长与留存
 - 指标卡：新增用户、日活用户、次日留存率。
@@ -787,7 +845,7 @@ Write `superset/dashboard-spec.md` with this exact dashboard structure:
 - 筛选器：日期、类目、用户分层。
 ```
 
-Write `superset/README.md` with PostgreSQL connection settings, dbt mart-to-dataset mappings, YAML import instructions, and a requirement to save manually captured screenshots to `superset/assets/` without any raw rows. Write `superset/taobao_analytics_dashboard.yaml` with named datasets for `fct_daily_metrics`, `fct_retention`, `fct_user_funnel`, and `fct_user_segment`.
+Write `superset/README.md` with the pinned Superset 4.1.2 startup/import path, PostgreSQL connection settings, dbt mart-to-dataset mappings, and the full-data-only screenshot boundary. Store the native import template under `superset/native_export/` and map fields in `superset/dashboard_manifest.json`, including `fct_hourly_metrics`, `fct_category_metrics`, and `fct_user_segment_activity`.
 
 Write `reports/taobao_user_behavior_analysis.md` with sections “业务背景”, “指标口径”, “分析发现”, “运营建议”, and “数据局限”. The report must describe findings as placeholders only after actual full-data runs; it must not invent results from the synthetic sample.
 

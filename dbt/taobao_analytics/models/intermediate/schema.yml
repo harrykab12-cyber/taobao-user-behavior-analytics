@@ -36,3 +36,12 @@ models:
           - accepted_values:
               values: [0, 1]
               quote: false
+
+  - name: int_user_funnel_path
+    columns:
+      - name: user_id
+        tests: [not_null, unique]
+      - name: first_intent_type
+        tests:
+          - accepted_values:
+              values: ['fav', 'cart']

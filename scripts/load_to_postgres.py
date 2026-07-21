@@ -4,10 +4,9 @@ import argparse
 import os
 from pathlib import Path
 
-import pandas as pd
 from sqlalchemy import create_engine
 
-from taobao_analytics.loading import load_cleaned_events
+from taobao_analytics.loading import load_cleaned_csv
 
 
 def main() -> None:
@@ -21,7 +20,11 @@ def main() -> None:
         "DATABASE_URL",
         "postgresql+psycopg://analytics:analytics_local_only@localhost:5432/taobao_analytics",
     )
-    inserted = load_cleaned_events(pd.read_csv(args.input_csv), create_engine(database_url))
+    inserted = load_cleaned_csv(
+        args.input_csv,
+        create_engine(database_url),
+        schema=os.environ.get("RAW_SCHEMA", "public"),
+    )
     print(f"Loaded {inserted} rows into raw_user_behavior")
 
 

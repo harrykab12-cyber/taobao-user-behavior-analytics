@@ -1,0 +1,6 @@
+slice_name: 加购未购用户数
+viz_type: big_number_total
+params: '{"datasource":"0__table","viz_type":"big_number_total","metric":"count_distinct_cart_without_buy_users","time_range":"No filter"}'
+uuid: 11111111-1111-4111-8111-111111111313
+dataset_uuid: 11111111-1111-4111-8111-111111111207
+version: 1.0.0

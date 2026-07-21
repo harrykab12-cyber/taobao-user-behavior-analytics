@@ -5,16 +5,40 @@ models:
     columns:
       - name: event_date
         tests: [not_null, unique]
-      - name: pv
+      - name: pv_events
+        tests: [not_null]
+      - name: uv
+        tests: [not_null]
+      - name: favorite_users
+        tests: [not_null]
+      - name: cart_users
+        tests: [not_null]
+      - name: new_users
+        tests: [not_null]
+      - name: purchase_users
+        tests: [not_null]
+      - name: repeat_purchase_users
         tests: [not_null]
       - name: purchase_conversion_rate
         tests:
+          - not_null
           - dbt_utils.expression_is_true:
               expression: "between 0 and 1"
 
-  - name: fct_user_funnel
+  - name: fct_hourly_metrics
     columns:
-      - name: pv_users
+      - name: event_hour
+        tests: [not_null, unique]
+      - name: event_date
+        tests: [not_null]
+      - name: hour_of_day
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 23"
+      - name: pv_events
+        tests: [not_null]
+      - name: uv
         tests: [not_null]
       - name: favorite_users
         tests: [not_null]
@@ -22,13 +46,71 @@ models:
         tests: [not_null]
       - name: purchase_users
         tests: [not_null]
+      - name: purchase_conversion_rate
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 1"
+
+  - name: fct_category_metrics
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [event_date, category_id]
+    columns:
+      - name: event_date
+        tests: [not_null]
+      - name: category_id
+        tests: [not_null]
+      - name: pv_events
+        tests: [not_null]
+      - name: uv
+        tests: [not_null]
+      - name: favorite_users
+        tests: [not_null]
+      - name: cart_users
+        tests: [not_null]
+      - name: purchase_users
+        tests: [not_null]
+      - name: purchase_conversion_rate
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 1"
+
+  - name: fct_user_funnel
+    columns:
+      - name: stage_order
+        tests:
+          - not_null
+          - unique
+          - accepted_values:
+              values: [1, 2, 3]
+              quote: false
+      - name: stage_code
+        tests:
+          - not_null
+          - unique
+          - accepted_values:
+              values: ['pv', 'intent', 'buy']
+      - name: stage_name
+        tests: [not_null]
+      - name: user_count
+        tests: [not_null]
+      - name: conversion_from_previous
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 1"
+      - name: conversion_from_pv
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 1"
 
   - name: fct_retention
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - cohort_date
-            - day_number
+          combination_of_columns: [cohort_date, day_number]
     columns:
       - name: cohort_date
         tests: [not_null]
@@ -37,6 +119,11 @@ models:
           - not_null
           - dbt_utils.expression_is_true:
               expression: ">= 0"
+      - name: cohort_users
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
       - name: retained_users
         tests: [not_null]
       - name: retention_rate
@@ -54,3 +141,36 @@ models:
           - not_null
           - accepted_values:
               values: ['复购型', '购买型', '加购未购型', '意向型', '浏览型']
+
+  - name: fct_user_segment_activity
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [user_id, event_date, category_id]
+    columns:
+      - name: user_id
+        tests: [not_null]
+      - name: event_date
+        tests: [not_null]
+      - name: category_id
+        tests: [not_null]
+      - name: user_segment
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['复购型', '购买型', '加购未购型', '意向型', '浏览型']
+      - name: has_pv
+        tests:
+          - not_null
+          - accepted_values: {values: [0, 1], quote: false}
+      - name: has_favorite
+        tests:
+          - not_null
+          - accepted_values: {values: [0, 1], quote: false}
+      - name: has_cart
+        tests:
+          - not_null
+          - accepted_values: {values: [0, 1], quote: false}
+      - name: has_purchase
+        tests:
+          - not_null
+          - accepted_values: {values: [0, 1], quote: false}

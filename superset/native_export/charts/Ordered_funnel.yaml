@@ -1,0 +1,6 @@
+slice_name: 有序用户漏斗
+viz_type: funnel_v2
+params: '{"datasource":"0__table","viz_type":"funnel_v2","groupby":["stage_name"],"metric":"sum__user_count","row_limit":100,"adhoc_filters":[],"sort_by_metric":false}'
+uuid: 11111111-1111-4111-8111-111111111306
+dataset_uuid: 11111111-1111-4111-8111-111111111203
+version: 1.0.0

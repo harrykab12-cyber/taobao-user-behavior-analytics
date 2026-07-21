@@ -1,12 +1,20 @@
 with daily as (
   select
     event_date,
-    count(*) filter (where behavior_type = 'pv') as pv,
+    count(*) filter (where behavior_type = 'pv') as pv_events,
     count(distinct user_id) as uv,
     count(distinct user_id) filter (where behavior_type = 'fav') as favorite_users,
     count(distinct user_id) filter (where behavior_type = 'cart') as cart_users,
     count(distinct user_id) filter (where behavior_type = 'buy') as purchase_users
   from {{ ref('stg_user_behavior') }}
+  group by 1
+), first_events as (
+  select user_id, min(event_date) as first_event_date
+  from {{ ref('stg_user_behavior') }}
+  group by 1
+), new_users as (
+  select first_event_date as event_date, count(*) as new_users
+  from first_events
   group by 1
 ), purchase_days as (
   select distinct user_id, event_date
@@ -24,8 +32,15 @@ with daily as (
   group by 1
 )
 select
-  daily.*,
+  daily.event_date,
+  daily.pv_events,
+  daily.uv,
+  daily.favorite_users,
+  daily.cart_users,
+  daily.purchase_users,
+  coalesce(new_users.new_users, 0) as new_users,
   coalesce(repeat_purchasers.repeat_purchase_users, 0) as repeat_purchase_users,
   purchase_users::numeric / nullif(uv, 0) as purchase_conversion_rate
 from daily
+left join new_users using (event_date)
 left join repeat_purchasers using (event_date)

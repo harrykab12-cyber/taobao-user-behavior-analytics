@@ -1,3 +1,5 @@
+import warnings
+
 import pandas as pd
 import pytest
 
@@ -59,8 +61,33 @@ def test_cleaning_reports_rows_removed_for_missing_keys_and_bad_timestamps() -> 
         columns=["user_id", "item_id", "category_id", "behavior_type", "timestamp"],
     )
 
-    cleaned, report = clean_user_behavior(raw)
+    with warnings.catch_warnings(record=True) as observed_warnings:
+        warnings.simplefilter("always")
+        cleaned, report = clean_user_behavior(raw)
 
     assert cleaned.empty
     assert report["null_key_rows_removed"] == 1
     assert report["invalid_timestamp_rows_removed"] == 1
+    assert not [
+        warning for warning in observed_warnings if warning.category is FutureWarning
+    ]
+
+
+def test_cleaning_parses_mixed_numeric_strings_without_future_warning() -> None:
+    raw = pd.DataFrame(
+        [
+            [1, 10, 100, "pv", "1511568000"],
+            [2, 20, 200, "buy", "not-a-timestamp"],
+        ],
+        columns=["user_id", "item_id", "category_id", "behavior_type", "timestamp"],
+    )
+
+    with warnings.catch_warnings(record=True) as observed_warnings:
+        warnings.simplefilter("always")
+        cleaned, report = clean_user_behavior(raw)
+
+    assert len(cleaned) == 1
+    assert report["invalid_timestamp_rows_removed"] == 1
+    assert not [
+        warning for warning in observed_warnings if warning.category is FutureWarning
+    ]

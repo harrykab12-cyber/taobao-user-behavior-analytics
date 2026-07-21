@@ -22,7 +22,8 @@ def clean_user_behavior(frame: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, in
     result = frame[REQUIRED_COLUMNS].copy()
     null_key_rows_removed = int(result[REQUIRED_COLUMNS].isna().any(axis=1).sum())
     result = result.dropna()
-    event_at = pd.to_datetime(result["timestamp"], unit="s", utc=True, errors="coerce")
+    numeric_timestamp = pd.to_numeric(result["timestamp"], errors="coerce")
+    event_at = pd.to_datetime(numeric_timestamp, unit="s", utc=True, errors="coerce")
     invalid_timestamp_rows_removed = int(event_at.isna().sum())
     result = result.loc[event_at.notna()].copy()
     event_at = event_at.loc[event_at.notna()]

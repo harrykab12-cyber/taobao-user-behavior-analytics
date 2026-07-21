@@ -1,0 +1,6 @@
+slice_name: 日活用户
+viz_type: big_number_total
+params: '{"datasource":"0__table","viz_type":"big_number_total","metric":"max__daily_uv","time_range":"No filter"}'
+uuid: 11111111-1111-4111-8111-111111111308
+dataset_uuid: 11111111-1111-4111-8111-111111111201
+version: 1.0.0

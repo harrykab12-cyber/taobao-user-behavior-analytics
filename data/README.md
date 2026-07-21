@@ -25,3 +25,8 @@ After downloading the source file, keep it at `data/raw/UserBehavior.csv` and
 run the root README's preparation command to produce the ignored local file
 `data/processed/user_behavior_cleaned.csv`. Neither raw nor processed full-data
 files belong in commits.
+
+The preparation command streams the source in bounded chunks and uses a
+temporary on-disk SQLite uniqueness constraint, so duplicates that cross CSV
+chunk boundaries are still removed without retaining the full dataset in RAM.
+The PostgreSQL loader also reads bounded CSV chunks and caps each insert batch.

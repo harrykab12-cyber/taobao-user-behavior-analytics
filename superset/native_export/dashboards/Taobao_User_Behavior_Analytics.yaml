@@ -1,0 +1,210 @@
+dashboard_title: 淘宝用户行为分析
+description: 三页运营看板；所有数值须在本地全量数据完成 dbt build 后计算。
+slug: taobao-user-behavior-analytics
+published: false
+uuid: 11111111-1111-4111-8111-111111111401
+version: 1.0.0
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    id: ROOT_ID
+    type: ROOT
+    children: [GRID_ID]
+  GRID_ID:
+    id: GRID_ID
+    type: GRID
+    parents: [ROOT_ID]
+    children: [HEADER_ID, TABS_ID]
+  HEADER_ID:
+    id: HEADER_ID
+    type: HEADER
+    parents: [ROOT_ID, GRID_ID]
+    children: []
+    meta: {text: 淘宝用户行为分析}
+  TABS_ID:
+    id: TABS_ID
+    type: TABS
+    parents: [ROOT_ID, GRID_ID]
+    children: [TAB_OVERVIEW, TAB_RETENTION, TAB_SEGMENT]
+  TAB_OVERVIEW:
+    id: TAB_OVERVIEW
+    type: TAB
+    parents: [ROOT_ID, GRID_ID, TABS_ID]
+    children: [ROW_OVERVIEW_CARDS, ROW_OVERVIEW_CHARTS]
+    meta: {text: 经营与漏斗概览}
+  TAB_RETENTION:
+    id: TAB_RETENTION
+    type: TAB
+    parents: [ROOT_ID, GRID_ID, TABS_ID]
+    children: [ROW_RETENTION_CARDS, ROW_RETENTION_CHARTS]
+    meta: {text: 用户增长与留存}
+  TAB_SEGMENT:
+    id: TAB_SEGMENT
+    type: TAB
+    parents: [ROOT_ID, GRID_ID, TABS_ID]
+    children: [ROW_SEGMENT_CARDS, ROW_SEGMENT_CHARTS]
+    meta: {text: 用户分层与品类运营}
+  ROW_OVERVIEW_CARDS:
+    id: ROW_OVERVIEW_CARDS
+    type: ROW
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW]
+    children: [CHART_301, CHART_302, CHART_303, CHART_304]
+    meta: {background: BACKGROUND_TRANSPARENT}
+  ROW_OVERVIEW_CHARTS:
+    id: ROW_OVERVIEW_CHARTS
+    type: ROW
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW]
+    children: [CHART_305, CHART_306]
+    meta: {background: BACKGROUND_TRANSPARENT}
+  ROW_RETENTION_CARDS:
+    id: ROW_RETENTION_CARDS
+    type: ROW
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_RETENTION]
+    children: [CHART_307, CHART_308, CHART_309]
+    meta: {background: BACKGROUND_TRANSPARENT}
+  ROW_RETENTION_CHARTS:
+    id: ROW_RETENTION_CHARTS
+    type: ROW
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_RETENTION]
+    children: [CHART_310, CHART_311]
+    meta: {background: BACKGROUND_TRANSPARENT}
+  ROW_SEGMENT_CARDS:
+    id: ROW_SEGMENT_CARDS
+    type: ROW
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_SEGMENT]
+    children: [CHART_312, CHART_313]
+    meta: {background: BACKGROUND_TRANSPARENT}
+  ROW_SEGMENT_CHARTS:
+    id: ROW_SEGMENT_CHARTS
+    type: ROW
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_SEGMENT]
+    children: [CHART_314, CHART_315]
+    meta: {background: BACKGROUND_TRANSPARENT}
+  CHART_301: &chart_301
+    id: CHART_301
+    type: CHART
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW, ROW_OVERVIEW_CARDS]
+    children: []
+    meta: {chartId: 301, height: 4, width: 3, sliceName: PV 事件数, uuid: 11111111-1111-4111-8111-111111111301}
+  CHART_302:
+    id: CHART_302
+    type: CHART
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW, ROW_OVERVIEW_CARDS]
+    children: []
+    meta: {chartId: 302, height: 4, width: 3, sliceName: UV, uuid: 11111111-1111-4111-8111-111111111302}
+  CHART_303:
+    id: CHART_303
+    type: CHART
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW, ROW_OVERVIEW_CARDS]
+    children: []
+    meta: {chartId: 303, height: 4, width: 3, sliceName: 购买用户数, uuid: 11111111-1111-4111-8111-111111111303}
+  CHART_304:
+    id: CHART_304
+    type: CHART
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW, ROW_OVERVIEW_CARDS]
+    children: []
+    meta: {chartId: 304, height: 4, width: 3, sliceName: 购买转化率, uuid: 11111111-1111-4111-8111-111111111304}
+  CHART_305:
+    id: CHART_305
+    type: CHART
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW, ROW_OVERVIEW_CHARTS]
+    children: []
+    meta: {chartId: 305, height: 10, width: 7, sliceName: 日 PV/UV 趋势, uuid: 11111111-1111-4111-8111-111111111305}
+  CHART_306:
+    id: CHART_306
+    type: CHART
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_OVERVIEW, ROW_OVERVIEW_CHARTS]
+    children: []
+    meta: {chartId: 306, height: 10, width: 5, sliceName: 有序用户漏斗, uuid: 11111111-1111-4111-8111-111111111306}
+  CHART_307:
+    id: CHART_307
+    type: CHART
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_RETENTION, ROW_RETENTION_CARDS]
+    children: []
+    meta: {chartId: 307, height: 4, width: 4, sliceName: 新增用户, uuid: 11111111-1111-4111-8111-111111111307}
+  CHART_308:
+    id: CHART_308
+    type: CHART
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_RETENTION, ROW_RETENTION_CARDS]
+    children: []
+    meta: {chartId: 308, height: 4, width: 4, sliceName: 日活用户, uuid: 11111111-1111-4111-8111-111111111308}
+  CHART_309:
+    id: CHART_309
+    type: CHART
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_RETENTION, ROW_RETENTION_CARDS]
+    children: []
+    meta: {chartId: 309, height: 4, width: 4, sliceName: 次日留存率, uuid: 11111111-1111-4111-8111-111111111309}
+  CHART_310:
+    id: CHART_310
+    type: CHART
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_RETENTION, ROW_RETENTION_CHARTS]
+    children: []
+    meta: {chartId: 310, height: 10, width: 5, sliceName: 小时活跃分布, uuid: 11111111-1111-4111-8111-111111111310}
+  CHART_311:
+    id: CHART_311
+    type: CHART
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_RETENTION, ROW_RETENTION_CHARTS]
+    children: []
+    meta: {chartId: 311, height: 10, width: 7, sliceName: 首日分群留存热力图, uuid: 11111111-1111-4111-8111-111111111311}
+  CHART_312:
+    id: CHART_312
+    type: CHART
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_SEGMENT, ROW_SEGMENT_CARDS]
+    children: []
+    meta: {chartId: 312, height: 7, width: 8, sliceName: 五类用户分层占比, uuid: 11111111-1111-4111-8111-111111111312}
+  CHART_313:
+    id: CHART_313
+    type: CHART
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_SEGMENT, ROW_SEGMENT_CARDS]
+    children: []
+    meta: {chartId: 313, height: 7, width: 4, sliceName: 加购未购用户数, uuid: 11111111-1111-4111-8111-111111111313}
+  CHART_314:
+    id: CHART_314
+    type: CHART
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_SEGMENT, ROW_SEGMENT_CHARTS]
+    children: []
+    meta: {chartId: 314, height: 10, width: 5, sliceName: 购买用户 Top 类目, uuid: 11111111-1111-4111-8111-111111111314}
+  CHART_315:
+    id: CHART_315
+    type: CHART
+    parents: [ROOT_ID, GRID_ID, TABS_ID, TAB_SEGMENT, ROW_SEGMENT_CHARTS]
+    children: []
+    meta: {chartId: 315, height: 10, width: 7, sliceName: 类目行为明细, uuid: 11111111-1111-4111-8111-111111111315}
+metadata:
+  color_scheme: supersetColors
+  refresh_frequency: 0
+  timed_refresh_immune_slices: []
+  expanded_slices: {}
+  default_filters: '{}'
+  chart_configuration: {}
+  native_filter_configuration:
+    - id: NATIVE_FILTER-event-date
+      controlValues: {enableEmptyFilter: false}
+      name: 日期
+      filterType: filter_time
+      targets:
+        - datasetUuid: 11111111-1111-4111-8111-111111111207
+          column: {name: event_date}
+      scope: {rootPath: [TAB_SEGMENT], excluded: []}
+      chartsInScope: [312, 313, 314]
+      tabsInScope: [TAB_SEGMENT]
+    - id: NATIVE_FILTER-category
+      controlValues: {enableEmptyFilter: true, inverseSelection: false, multiSelect: true, searchAllOptions: false}
+      name: 类目
+      filterType: filter_select
+      targets:
+        - datasetUuid: 11111111-1111-4111-8111-111111111207
+          column: {name: category_id}
+      scope: {rootPath: [TAB_SEGMENT], excluded: []}
+      chartsInScope: [312, 313, 314]
+      tabsInScope: [TAB_SEGMENT]
+    - id: NATIVE_FILTER-segment
+      controlValues: {enableEmptyFilter: true, inverseSelection: false, multiSelect: true, searchAllOptions: false}
+      name: 用户分层
+      filterType: filter_select
+      targets:
+        - datasetUuid: 11111111-1111-4111-8111-111111111207
+          column: {name: user_segment}
+      scope: {rootPath: [TAB_SEGMENT], excluded: []}
+      chartsInScope: [312, 313, 314]
+      tabsInScope: [TAB_SEGMENT]

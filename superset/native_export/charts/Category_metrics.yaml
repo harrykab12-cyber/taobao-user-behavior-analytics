@@ -1,0 +1,6 @@
+slice_name: 类目行为明细
+viz_type: table
+params: '{"datasource":"0__table","viz_type":"table","all_columns":["event_date","category_id","pv_events","uv","purchase_users","purchase_conversion_rate"],"adhoc_filters":[],"row_limit":1000,"order_desc":true}'
+uuid: 11111111-1111-4111-8111-111111111315
+dataset_uuid: 11111111-1111-4111-8111-111111111206
+version: 1.0.0

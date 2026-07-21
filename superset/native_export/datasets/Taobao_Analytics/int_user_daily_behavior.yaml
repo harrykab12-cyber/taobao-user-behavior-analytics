@@ -1,0 +1,22 @@
+table_name: int_user_daily_behavior
+main_dttm_col: event_date
+description: 用户日行为粒度，用于按日期范围准确去重 UV 和购买用户。
+schema: "__DBT_SCHEMA__"
+uuid: 11111111-1111-4111-8111-111111111202
+database_uuid: 11111111-1111-4111-8111-111111111111
+version: 1.0.0
+columns:
+  - {column_name: user_id, type: BIGINT, groupby: true, filterable: true}
+  - {column_name: event_date, type: DATE, is_dttm: true, groupby: true, filterable: true}
+  - {column_name: has_pv, type: INTEGER, groupby: true, filterable: true}
+  - {column_name: has_favorite, type: INTEGER, groupby: true, filterable: true}
+  - {column_name: has_cart, type: INTEGER, groupby: true, filterable: true}
+  - {column_name: has_purchase, type: INTEGER, groupby: true, filterable: true}
+metrics:
+  - {metric_name: count_distinct_users, verbose_name: UV, expression: 'COUNT(DISTINCT user_id)'}
+  - metric_name: count_distinct_purchase_users
+    verbose_name: 购买用户数
+    expression: 'COUNT(DISTINCT CASE WHEN has_purchase = 1 THEN user_id END)'
+  - metric_name: purchase_user_conversion
+    verbose_name: 购买转化率
+    expression: 'COUNT(DISTINCT CASE WHEN has_purchase = 1 THEN user_id END)::numeric / NULLIF(COUNT(DISTINCT user_id), 0)'

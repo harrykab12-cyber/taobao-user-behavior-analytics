@@ -2,13 +2,22 @@ version: 2
 
 sources:
   - name: raw
-    schema: public
+    schema: "{{ env_var('RAW_SCHEMA', 'public') }}"
     tables:
       - name: raw_user_behavior
         columns:
           - name: user_id
             tests: [not_null]
+          - name: item_id
+            tests: [not_null]
+          - name: category_id
+            tests: [not_null]
           - name: behavior_type
             tests:
+              - not_null
               - accepted_values:
                   values: ["pv", "fav", "cart", "buy"]
+          - name: event_at
+            tests: [not_null]
+          - name: event_date
+            tests: [not_null]

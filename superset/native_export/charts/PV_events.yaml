@@ -1,0 +1,6 @@
+slice_name: PV 事件数
+viz_type: big_number_total
+params: '{"datasource":"0__table","viz_type":"big_number_total","metric":"sum__pv_events","time_range":"No filter","subheader":"behavior_type = pv"}'
+uuid: 11111111-1111-4111-8111-111111111301
+dataset_uuid: 11111111-1111-4111-8111-111111111201
+version: 1.0.0

@@ -1,0 +1,15 @@
+table_name: fct_user_funnel
+description: 按时间顺序完成 pv→(fav 或 cart)→buy 的累计用户数。
+schema: "__DBT_SCHEMA__"
+uuid: 11111111-1111-4111-8111-111111111203
+database_uuid: 11111111-1111-4111-8111-111111111111
+version: 1.0.0
+columns:
+  - {column_name: stage_order, type: INTEGER, groupby: true, filterable: true}
+  - {column_name: stage_code, type: TEXT, groupby: true, filterable: true}
+  - {column_name: stage_name, type: TEXT, groupby: true, filterable: true}
+  - {column_name: user_count, type: BIGINT, groupby: false, filterable: false}
+  - {column_name: conversion_from_previous, type: NUMERIC, groupby: false, filterable: false}
+  - {column_name: conversion_from_pv, type: NUMERIC, groupby: false, filterable: false}
+metrics:
+  - {metric_name: sum__user_count, verbose_name: 用户数, expression: 'SUM(user_count)'}

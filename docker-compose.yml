@@ -1,3 +1,11 @@
+x-superset-image: &superset-image apache/superset:4.1.2
+x-superset-environment: &superset-environment
+  SUPERSET_CONFIG_PATH: /app/superset-assets/superset_config.py
+  SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:-local_dev_only_change_before_shared_use_4f5d2f0a}
+  SUPERSET_METADATA_DATABASE_URI: postgresql+psycopg2://${POSTGRES_USER:-analytics}:${POSTGRES_PASSWORD:-analytics_local_only}@postgres:5432/${POSTGRES_DB:-taobao_analytics}
+  SUPERSET_ADMIN_USERNAME: ${SUPERSET_ADMIN_USERNAME:-admin}
+  SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD:-admin_local_only}
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -14,6 +22,34 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  superset-init:
+    image: *superset-image
+    environment: *superset-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./superset:/app/superset-assets
+    command: ["/bin/sh", "/app/superset-assets/bootstrap.sh"]
+    restart: "no"
+
+  superset:
+    image: *superset-image
+    environment: *superset-environment
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./superset:/app/superset-assets
+    ports:
+      - "${SUPERSET_PORT:-8088}:8088"
+    command: ["superset", "run", "-h", "0.0.0.0", "-p", "8088", "--with-threads"]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8088/health', timeout=3)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 20
 
 volumes:
   postgres_data:

@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "superset_version": "4.1.2",
+  "datasets": {
+    "fct_daily_metrics": {
+      "time_column": "event_date",
+      "fields": ["event_date", "pv_events", "uv", "favorite_users", "cart_users", "purchase_users", "new_users", "repeat_purchase_users", "purchase_conversion_rate"]
+    },
+    "int_user_daily_behavior": {
+      "time_column": "event_date",
+      "fields": ["user_id", "event_date", "has_pv", "has_favorite", "has_cart", "has_purchase"]
+    },
+    "fct_user_funnel": {
+      "fields": ["stage_order", "stage_code", "stage_name", "user_count", "conversion_from_previous", "conversion_from_pv"]
+    },
+    "fct_retention": {
+      "time_column": "cohort_date",
+      "fields": ["cohort_date", "day_number", "cohort_users", "retained_users", "retention_rate"]
+    },
+    "fct_hourly_metrics": {
+      "time_column": "event_hour",
+      "fields": ["event_hour", "event_date", "hour_of_day", "pv_events", "uv", "favorite_users", "cart_users", "purchase_users", "purchase_conversion_rate"]
+    },
+    "fct_category_metrics": {
+      "time_column": "event_date",
+      "fields": ["event_date", "category_id", "pv_events", "uv", "favorite_users", "cart_users", "purchase_users", "purchase_conversion_rate"]
+    },
+    "fct_user_segment_activity": {
+      "time_column": "event_date",
+      "fields": ["user_id", "event_date", "category_id", "user_segment", "has_pv", "has_favorite", "has_cart", "has_purchase"]
+    }
+  },
+  "pages": [
+    {
+      "name": "经营与漏斗概览",
+      "charts": [
+        {"name": "PV 事件数", "dataset": "fct_daily_metrics", "fields": ["event_date", "pv_events"], "metric": "SUM(pv_events)"},
+        {"name": "UV", "dataset": "int_user_daily_behavior", "fields": ["event_date", "user_id"], "metric": "COUNT_DISTINCT(user_id)"},
+        {"name": "购买用户数", "dataset": "int_user_daily_behavior", "fields": ["event_date", "user_id", "has_purchase"], "metric": "COUNT_DISTINCT(user_id) WHERE has_purchase = 1"},
+        {"name": "购买转化率", "dataset": "int_user_daily_behavior", "fields": ["event_date", "user_id", "has_purchase"], "metric": "购买用户数 / UV"},
+        {"name": "日 PV/UV 趋势", "dataset": "fct_daily_metrics", "fields": ["event_date", "pv_events", "uv"]},
+        {"name": "有序用户漏斗", "dataset": "fct_user_funnel", "fields": ["stage_order", "stage_name", "user_count", "conversion_from_previous"]}
+      ]
+    },
+    {
+      "name": "用户增长与留存",
+      "charts": [
+        {"name": "新增用户", "dataset": "fct_daily_metrics", "fields": ["event_date", "new_users"], "metric": "SUM(new_users)"},
+        {"name": "日活用户", "dataset": "fct_daily_metrics", "fields": ["event_date", "uv"], "metric": "MAX(uv)"},
+        {"name": "次日留存率", "dataset": "fct_retention", "fields": ["cohort_date", "day_number", "cohort_users", "retained_users"], "metric": "SUM(retained_users) / SUM(cohort_users) WHERE day_number = 1"},
+        {"name": "小时活跃分布", "dataset": "fct_hourly_metrics", "fields": ["event_hour", "hour_of_day", "uv"]},
+        {"name": "首日分群留存热力图", "dataset": "fct_retention", "fields": ["cohort_date", "day_number", "retention_rate"]}
+      ]
+    },
+    {
+      "name": "用户分层与品类运营",
+      "filters": ["event_date", "category_id", "user_segment"],
+      "charts": [
+        {"name": "五类用户分层占比", "dataset": "fct_user_segment_activity", "fields": ["event_date", "category_id", "user_segment", "user_id"], "metric": "COUNT_DISTINCT(user_id)"},
+        {"name": "加购未购用户数", "dataset": "fct_user_segment_activity", "fields": ["event_date", "category_id", "user_segment", "user_id"], "metric": "COUNT_DISTINCT(user_id) WHERE user_segment = '加购未购型'"},
+        {"name": "购买用户 Top 类目", "dataset": "fct_user_segment_activity", "fields": ["event_date", "category_id", "user_segment", "user_id", "has_purchase"], "metric": "COUNT_DISTINCT(user_id) WHERE has_purchase = 1"},
+        {"name": "类目行为明细", "dataset": "fct_category_metrics", "fields": ["event_date", "category_id", "pv_events", "uv", "purchase_users", "purchase_conversion_rate"]}
+      ]
+    }
+  ]
+}

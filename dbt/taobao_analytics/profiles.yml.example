@@ -8,5 +8,5 @@ taobao_analytics:
       password: "{{ env_var('POSTGRES_PASSWORD', 'analytics_local_only') }}"
       port: "{{ env_var('POSTGRES_PORT', '5432') | int }}"
       dbname: "{{ env_var('POSTGRES_DB', 'taobao_analytics') }}"
-      schema: analytics
+      schema: "{{ env_var('DBT_SCHEMA', 'analytics') }}"
       threads: 4

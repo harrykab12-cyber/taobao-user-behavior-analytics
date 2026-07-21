@@ -1,0 +1,17 @@
+table_name: fct_retention
+main_dttm_col: cohort_date
+description: 从 cohort_date 到源数据最大日期的稠密留存矩阵，缺失活跃日为零。
+schema: "__DBT_SCHEMA__"
+uuid: 11111111-1111-4111-8111-111111111204
+database_uuid: 11111111-1111-4111-8111-111111111111
+version: 1.0.0
+columns:
+  - {column_name: cohort_date, type: DATE, is_dttm: true, groupby: true, filterable: true}
+  - {column_name: day_number, type: INTEGER, groupby: true, filterable: true}
+  - {column_name: cohort_users, type: BIGINT, groupby: false, filterable: false}
+  - {column_name: retained_users, type: BIGINT, groupby: false, filterable: false}
+  - {column_name: retention_rate, type: NUMERIC, groupby: false, filterable: false}
+metrics:
+  - metric_name: weighted_retention_rate
+    verbose_name: 加权留存率
+    expression: 'SUM(retained_users)::numeric / NULLIF(SUM(cohort_users), 0)'

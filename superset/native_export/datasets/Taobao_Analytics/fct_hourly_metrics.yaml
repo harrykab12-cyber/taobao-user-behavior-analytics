@@ -1,0 +1,20 @@
+table_name: fct_hourly_metrics
+main_dttm_col: event_hour
+description: 小时粒度行为指标。
+schema: "__DBT_SCHEMA__"
+uuid: 11111111-1111-4111-8111-111111111205
+database_uuid: 11111111-1111-4111-8111-111111111111
+version: 1.0.0
+columns:
+  - {column_name: event_hour, type: TIMESTAMP, is_dttm: true, groupby: true, filterable: true}
+  - {column_name: event_date, type: DATE, is_dttm: true, groupby: true, filterable: true}
+  - {column_name: hour_of_day, type: INTEGER, groupby: true, filterable: true}
+  - {column_name: pv_events, type: BIGINT, groupby: false, filterable: false}
+  - {column_name: uv, type: BIGINT, groupby: false, filterable: false}
+  - {column_name: favorite_users, type: BIGINT, groupby: false, filterable: false}
+  - {column_name: cart_users, type: BIGINT, groupby: false, filterable: false}
+  - {column_name: purchase_users, type: BIGINT, groupby: false, filterable: false}
+  - {column_name: purchase_conversion_rate, type: NUMERIC, groupby: false, filterable: false}
+metrics:
+  - {metric_name: sum__hourly_uv, verbose_name: 活跃用户时次数, expression: 'SUM(uv)'}
+  - {metric_name: sum__hourly_pv_events, verbose_name: PV 事件数, expression: 'SUM(pv_events)'}

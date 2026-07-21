@@ -4,9 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-import pandas as pd
-
-from taobao_analytics.cleaning import clean_user_behavior
+from taobao_analytics.preparation import prepare_cleaned_csv
 
 
 def main() -> None:
@@ -16,9 +14,7 @@ def main() -> None:
     args = parser.parse_args()
     if not args.input_csv.exists():
         raise FileNotFoundError(f"Raw data not found: {args.input_csv}. See data/README.md.")
-    cleaned, report = clean_user_behavior(pd.read_csv(args.input_csv))
-    args.output_csv.parent.mkdir(parents=True, exist_ok=True)
-    cleaned.to_csv(args.output_csv, index=False)
+    report = prepare_cleaned_csv(args.input_csv, args.output_csv)
     print(json.dumps(report, ensure_ascii=False))
 
 

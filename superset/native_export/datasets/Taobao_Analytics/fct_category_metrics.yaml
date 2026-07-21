@@ -1,0 +1,19 @@
+table_name: fct_category_metrics
+main_dttm_col: event_date
+description: 日期与类目粒度行为指标。
+schema: "__DBT_SCHEMA__"
+uuid: 11111111-1111-4111-8111-111111111206
+database_uuid: 11111111-1111-4111-8111-111111111111
+version: 1.0.0
+columns:
+  - {column_name: event_date, type: DATE, is_dttm: true, groupby: true, filterable: true}
+  - {column_name: category_id, type: BIGINT, groupby: true, filterable: true}
+  - {column_name: pv_events, type: BIGINT, groupby: false, filterable: false}
+  - {column_name: uv, type: BIGINT, groupby: false, filterable: false}
+  - {column_name: favorite_users, type: BIGINT, groupby: false, filterable: false}
+  - {column_name: cart_users, type: BIGINT, groupby: false, filterable: false}
+  - {column_name: purchase_users, type: BIGINT, groupby: false, filterable: false}
+  - {column_name: purchase_conversion_rate, type: NUMERIC, groupby: false, filterable: false}
+metrics:
+  - {metric_name: sum__category_pv_events, verbose_name: PV 事件数, expression: 'SUM(pv_events)'}
+  - {metric_name: sum__category_purchase_users, verbose_name: 购买用户时次数, expression: 'SUM(purchase_users)'}
