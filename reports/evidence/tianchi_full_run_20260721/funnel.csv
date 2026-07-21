@@ -1,0 +1,4 @@
+stage_order,stage_code,stage_name,user_count,conversion_from_previous,conversion_from_pv
+1,pv,浏览,984105,1.0,1.0
+2,intent,意向（收藏或加购）,850377,0.8641120612129803,0.8641120612129803
+3,buy,购买,530839,0.6242396019647756,0.5394129691445526

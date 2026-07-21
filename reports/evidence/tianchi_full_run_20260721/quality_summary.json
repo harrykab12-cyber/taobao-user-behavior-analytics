@@ -1,0 +1,24 @@
+{
+  "source": "data/processed/user_behavior_cleaned.csv",
+  "event_rows": 100095182,
+  "unique_users": 987991,
+  "event_counts": {
+    "buy": 2015807,
+    "cart": 5530446,
+    "fav": 2888258,
+    "pv": 89660671
+  },
+  "time_range": {
+    "min_event_at": "2017-11-25 00:00:00",
+    "max_event_at": "2017-12-03 23:59:59"
+  },
+  "quality_checks": {
+    "invalid_behavior_rows": 0,
+    "event_date_mismatch_rows": 0
+  },
+  "funnel": {
+    "pv_users": 984105,
+    "intent_users": 850377,
+    "purchase_users": 530839
+  }
+}

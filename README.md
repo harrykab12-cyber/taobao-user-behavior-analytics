@@ -1,6 +1,6 @@
 # 淘宝用户行为分析：有序漏斗、留存与用户分层
 
-> 使用匿名化天池淘宝用户行为数据构建的个人数据分析作品集。仓库不包含原始全量数据，也不展示未经真实运行验证的结果。
+> 使用匿名化天池淘宝用户行为数据构建的个人数据分析作品集。仓库不包含原始全量数据；`reports/evidence/` 仅保存一次真实全量运行的聚合证据，不含用户级记录。
 
 ## 项目亮点
 
@@ -13,6 +13,8 @@
 ## 数据与指标边界
 
 数据来源为阿里云天池“淘宝用户购物行为数据集”。原始数据不提交到仓库；请按平台规则下载到 `data/raw/UserBehavior.csv`。`data/sample/` 仅是合成测试数据，不能用于推断真实规模、趋势或业务结论。
+
+本仓库已在本地对下载的官方数据完成一次真实全量运行。清洗规则统一使用 `Asia/Shanghai`，保留 `2017-11-25 00:00:00` 至 `2017-12-03 23:59:59` 的观察窗；质量报告记录了 55,576 条超窗记录与 49 条重复记录的剔除情况。可复核的汇总文件位于 [`reports/evidence/tianchi_full_run_20260721`](reports/evidence/tianchi_full_run_20260721)。
 
 - PV：`behavior_type = 'pv'` 的行为事件数，不是全部行为记录数。
 - UV：筛选范围内发生任意行为的去重用户数。
@@ -67,6 +69,16 @@ git diff --check
 ```
 
 本仓库提供 Superset `4.1.2` 目标格式的导入资产，但只有在本地 PostgreSQL、dbt 和 Superset 实际运行成功后，才能声明导入成功或保存看板截图。当前仓库不以合成样本截图冒充全量分析成果。
+
+Python 全量聚合证据可在不启动 Docker 的环境中复现：
+
+```bash
+python scripts/analyze_data.py \
+  data/processed/user_behavior_cleaned.csv \
+  reports/evidence/tianchi_full_run_YYYYMMDD
+```
+
+该脚本输出日/小时指标、有序漏斗、留存、用户分层、购买事件 Top 类目及质量摘要。它与 dbt/Superset 资产使用同一指标口径，但不等同于已完成 Docker、PostgreSQL、dbt 或 Superset 的本机运行。
 
 ## 项目导航
 
