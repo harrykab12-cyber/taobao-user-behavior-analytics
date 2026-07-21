@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+.env
+data/raw/
+data/processed/
+dbt/taobao_analytics/target/
+dbt/taobao_analytics/logs/
+superset/assets/*.png
+!superset/assets/.gitkeep
+work/
+.superpowers/
