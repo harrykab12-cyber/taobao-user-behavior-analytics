@@ -1,0 +1,40 @@
+version: 1
+dashboard:
+  name: 淘宝用户行为分析
+  pages:
+    - name: 经营与漏斗概览
+      datasets: [fct_daily_metrics, fct_user_funnel]
+      charts:
+        - PV、UV、购买用户数、购买转化率
+        - 日 PV/UV 趋势
+        - 四阶段用户漏斗
+    - name: 用户增长与留存
+      datasets: [fct_daily_metrics, fct_retention]
+      charts:
+        - 新增用户、日活用户、次日留存率
+        - 小时活跃分布
+        - 首日分群留存热力图
+    - name: 用户分层与品类运营
+      datasets: [fct_user_segment]
+      charts:
+        - 五类用户分层占比
+        - 加购未购用户数
+        - 购买用户 Top 类目
+      filters: [日期, 类目, 用户分层]
+datasets:
+  - name: fct_daily_metrics
+    table_name: fct_daily_metrics
+    schema: analytics
+    description: 每日 PV、UV 与购买转化率指标。
+  - name: fct_retention
+    table_name: fct_retention
+    schema: analytics
+    description: 用户新增、活跃和留存指标。
+  - name: fct_user_funnel
+    table_name: fct_user_funnel
+    schema: analytics
+    description: 用户行为漏斗指标。
+  - name: fct_user_segment
+    table_name: fct_user_segment
+    schema: analytics
+    description: 用户分层和品类运营指标。
