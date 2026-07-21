@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: fct_daily_metrics
+    columns:
+      - name: event_date
+        tests: [not_null, unique]
+      - name: pv
+        tests: [not_null]
+      - name: purchase_conversion_rate
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 1"

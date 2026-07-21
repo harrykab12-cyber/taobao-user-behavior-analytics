@@ -1,0 +1,11 @@
+name: taobao_analytics
+version: 1.0.0
+config-version: 2
+profile: taobao_analytics
+model-paths: ["models"]
+models:
+  taobao_analytics:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

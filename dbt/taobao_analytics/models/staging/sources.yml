@@ -1,0 +1,14 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: public
+    tables:
+      - name: raw_user_behavior
+        columns:
+          - name: user_id
+            tests: [not_null]
+          - name: behavior_type
+            tests:
+              - accepted_values:
+                  values: ["pv", "fav", "cart", "buy"]
