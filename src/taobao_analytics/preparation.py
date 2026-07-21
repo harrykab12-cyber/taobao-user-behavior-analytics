@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from taobao_analytics.cleaning import clean_user_behavior
+from taobao_analytics.cleaning import REQUIRED_COLUMNS, clean_user_behavior
 
 OUTPUT_COLUMNS = [
     "user_id",
@@ -17,6 +17,14 @@ OUTPUT_COLUMNS = [
     "event_at",
     "event_date",
 ]
+
+
+def _csv_read_options(input_csv: Path) -> dict[str, object]:
+    """Accept both repository fixtures and Tianchi's headerless CSV export."""
+    columns = pd.read_csv(input_csv, nrows=0).columns.tolist()
+    if set(REQUIRED_COLUMNS).issubset(columns):
+        return {}
+    return {"header": None, "names": REQUIRED_COLUMNS}
 
 
 def prepare_cleaned_csv(
@@ -64,7 +72,9 @@ def prepare_cleaned_csv(
                 """
             )
 
-            for chunk in pd.read_csv(input_csv, chunksize=chunksize):
+            for chunk in pd.read_csv(
+                input_csv, chunksize=chunksize, **_csv_read_options(input_csv)
+            ):
                 cleaned, report = clean_user_behavior(chunk)
                 for key in (
                     "input_rows",
